@@ -1,0 +1,3 @@
+local.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+local.datasource.username=
+local.datasource.password=
