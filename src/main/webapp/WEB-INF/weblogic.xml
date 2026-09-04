@@ -14,6 +14,8 @@
 			<wls:package-name>org.hibernate.*</wls:package-name>
 			<wls:package-name>jakarta.persistence.*</wls:package-name>
 			<wls:package-name>jakarta.validation.*</wls:package-name>
+			<wls:package-name>jakarta.servlet.jsp.*</wls:package-name>
+			<wls:package-name>jakarta.el.*</wls:package-name>
 			<wls:package-name>org.aopalliance.*</wls:package-name>
 			<wls:package-name>org.apache.commons.logging.*</wls:package-name>
 		</wls:prefer-application-packages>

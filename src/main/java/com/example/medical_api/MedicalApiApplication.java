@@ -5,11 +5,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.web.WebApplicationInitializer;
 
 import com.example.medical_api.config.LocalJndiDataSourceInitializer;
 
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
-public class MedicalApiApplication extends SpringBootServletInitializer {
+public class MedicalApiApplication extends SpringBootServletInitializer implements WebApplicationInitializer {
 
 	public static void main(String[] args) {
 		SpringApplication application = new SpringApplication(MedicalApiApplication.class);
