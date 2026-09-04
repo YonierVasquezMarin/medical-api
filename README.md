@@ -94,7 +94,7 @@ La API **siempre** obtiene el pool JDBC con un lookup JNDI (`spring.datasource.j
 
 | Entorno | Perfil | Nombre JNDI | Quién publica el recurso |
 |---------|--------|-------------|--------------------------|
-| Desarrollo | `local` (por defecto) | `java:comp/env/jdbc/MedicalDS` | `LocalJndiDataSourceInitializer` |
+| Desarrollo | `local` (por defecto) | `jdbc/MedicalDS` | `LocalJndiDataSourceInitializer` |
 | WebLogic | `weblogic` | `jdbc/MedicalDS` | Datasource del dominio |
 
 Las credenciales **no** van en Git. En local solo sirven para **publicar** el DataSource en JNDI. En WebLogic viven cifradas en el dominio.
@@ -107,7 +107,12 @@ Copia `src/main/resources/application-local.properties.example` a `application-l
 local.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
 local.datasource.username=TU_USUARIO
 local.datasource.password=TU_CONTRASEÑA
+jwt.secret=TU_SECRETO_JWT_DE_32_CARACTERES
+jwt.expiration-ms=3600000
+server.port=8081
 ```
+
+Oracle XE suele ocupar el **8080** (listener / Apex). En local la API usa **8081**.
 
 Equivalente con variables de usuario de Windows:
 
@@ -127,16 +132,47 @@ Arranque: `mvnw.cmd spring-boot:run` (perfil `local`).
 
 ---
 
-## 🔐 Variables de entorno para JWT
+# 👤 Usuarios y autenticación JWT
 
-Para el manejo y cifrado de tokens JWT, es necesario definir las siguientes variables de entorno (ámbito **Usuario** en Windows):
+## Tabla `USERS`
 
-| Variable               | Descripción                               | Ejemplo                        |
-|------------------------|-------------------------------------------|--------------------------------|
-| `JWT_SECRET`           | Clave secreta para firmar el token JWT (32 caracteres)    | `TuSecretoSuperSeguro123!`     |
-| `JWT_EXPIRATION_MS`    | Tiempo de expiración del token en milisegundos | `3600000` (1 hora)         |
+Ejecutar a mano el script [`src/main/resources/db/users.sql`](src/main/resources/db/users.sql) (`ddl-auto=none`). Está pensado para **Oracle 11g XE**: secuencia `USERS_SEQ` + tabla (no usa `IDENTITY`, que es 12c+).
 
-Asegúrate de registrar estas variables en el sistema antes de ejecutar la API para garantizar la correcta generación y validación de tokens.
+Si la tabla ya existía con otra definición:
+
+```sql
+DROP TRIGGER USERS_BI;
+DROP TABLE USERS;
+DROP SEQUENCE USERS_SEQ;
+```
+
+Luego vuelve a ejecutar `users.sql`.
+
+El administrador se inserta en base de datos (rol `ADMIN` y `PASSWORD_HASHED` con BCrypt). `POST /api/users` es público.
+
+## JWT en local
+
+Igual que la base de datos: valores en `application-local.properties` (fuera de Git). Copia desde el `.example`:
+
+```properties
+jwt.secret=clave-de-al-menos-32-caracteres!!
+jwt.expiration-ms=3600000
+```
+
+`jwt.secret` debe tener **mínimo 32 caracteres**. En WebLogic usar `JWT_SECRET` y `JWT_EXPIRATION_MS` en el servidor, no un secreto en el repositorio.
+
+## Endpoints
+
+| Método | Ruta | Auth |
+|--------|------|------|
+| POST | `/api/auth/login` | Público |
+| POST | `/api/users` | Público |
+| GET | `/api/users` | JWT + rol `ADMIN` |
+| DELETE | `/api/users/{id}` | JWT + rol `ADMIN` |
+
+Tras el login, enviar `Authorization: Bearer <token>` en listado y eliminación.
+
+Códigos: 400 validación, 401 sin token o login inválido, 403 autenticado sin rol ADMIN, 404 al eliminar un id inexistente, 409 email duplicado.
 
 ---
 
@@ -149,7 +185,7 @@ Con la extensión **Spring Boot Extension Pack** instalada, también puedes leva
 1. Abrir `MedicalApiApplication.java`
 2. Pulsar el botón **Play** (▶) que aparece sobre el método `main` o en la barra de **Run and Debug**
 
-Spring Boot iniciará la aplicación con la misma configuración del proyecto Maven.
+Spring Boot iniciará la aplicación con la misma configuración del proyecto Maven. En local queda en `http://localhost:8081`.
 
 ## Desde la terminal
 

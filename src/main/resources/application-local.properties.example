@@ -1,3 +1,11 @@
 local.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
 local.datasource.username=
 local.datasource.password=
+
+spring.datasource.jndi-name=jdbc/MedicalDS
+server.port=8081
+
+jwt.secret=
+jwt.expiration-ms=3600000
+
+logging.level.org.osjava.sj.jndi.MemoryContext=OFF

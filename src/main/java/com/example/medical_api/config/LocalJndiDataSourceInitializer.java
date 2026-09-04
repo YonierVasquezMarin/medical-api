@@ -16,9 +16,11 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class LocalJndiDataSourceInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-	public static final String NOMBRE_JNDI_LOCAL = "java:comp/env/jdbc/MedicalDS";
+	public static final String NOMBRE_JNDI_LOCAL = "jdbc/MedicalDS";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LocalJndiDataSourceInitializer.class);
+
+	private static HikariDataSource _dataSourcePublicado;
 
 	private ConfigurableEnvironment _environment;
 	private HikariDataSource _dataSource;
@@ -46,7 +48,8 @@ public class LocalJndiDataSourceInitializer implements ApplicationContextInitial
 
 	private boolean PerfilLocalNoEstaActivo() {
 		boolean perfilLocalActivo = _environment.acceptsProfiles(Profiles.of("local"));
-		return !perfilLocalActivo;
+		boolean propiedadIndicaLocal = "local".equals(_environment.getProperty("spring.profiles.active"));
+		return !perfilLocalActivo && !propiedadIndicaLocal;
 	}
 
 	private void ValidarCredencialesLocales() {
@@ -98,12 +101,49 @@ public class LocalJndiDataSourceInitializer implements ApplicationContextInitial
 	private void ActivarContextoJndiEnMemoria() {
 		System.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.osjava.sj.MemoryContextFactory");
 		System.setProperty("org.osjava.sj.jndi.shared", "true");
+		System.setProperty("org.osjava.sj.jndi.ignoreClose", "true");
 		System.setProperty("org.osjava.sj.delimiter", "/");
 	}
 
+	public static void ReenlazarDataSourceEnJndi() {
+		if (_dataSourcePublicado == null) {
+			return;
+		}
+		try {
+			EnlazarDataSourceEnContexto(_dataSourcePublicado);
+		} catch (NamingException ex) {
+			throw new IllegalStateException("No fue posible reenlazar el DataSource local en JNDI", ex);
+		}
+	}
+
 	private void EnlazarDataSourceEnJndi() throws NamingException {
+		_dataSourcePublicado = _dataSource;
+		EnlazarDataSourceEnContexto(_dataSource);
+	}
+
+	private static void EnlazarDataSourceEnContexto(HikariDataSource dataSource) throws NamingException {
 		Context contexto = new InitialContext();
-		contexto.rebind(NOMBRE_JNDI_LOCAL, _dataSource);
+		Context contextoJdbc = ObtenerOCrearSubcontexto(contexto, "jdbc");
+		contextoJdbc.rebind("MedicalDS", dataSource);
+	}
+
+	private static Context ObtenerOCrearSubcontexto(Context padre, String nombre) throws NamingException {
+		Object encontrado = BuscarSubcontextoSiExiste(padre, nombre);
+		if (encontrado instanceof Context context) {
+			return context;
+		}
+		if (encontrado != null) {
+			throw new NamingException("El nombre JNDI " + nombre + " ya existe y no es un contexto");
+		}
+		return padre.createSubcontext(nombre);
+	}
+
+	private static Object BuscarSubcontextoSiExiste(Context padre, String nombre) {
+		try {
+			return padre.lookup(nombre);
+		} catch (NamingException ex) {
+			return null;
+		}
 	}
 
 	private void RegistrarLog_DataSourceLocalPublicadoEnJndi() {
