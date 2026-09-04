@@ -165,10 +165,13 @@ jwt.expiration-ms=3600000
 
 | Método | Ruta | Auth |
 |--------|------|------|
+| GET | `/api/health` | Público |
 | POST | `/api/auth/login` | Público |
 | POST | `/api/users` | Público |
 | GET | `/api/users` | JWT + rol `ADMIN` |
 | DELETE | `/api/users/{id}` | JWT + rol `ADMIN` |
+
+`GET /api/health` responde `200` cuando la API y la base de datos están disponibles, o `503` si la conexión a la base de datos falla. El cuerpo incluye `status`, `api` y `database` (`UP` / `DOWN`).
 
 Tras el login, enviar `Authorization: Bearer <token>` en listado y eliminación.
 
