@@ -36,7 +36,7 @@ public class LocalJndiDataSourceInitializer implements ApplicationContextInitial
 	}
 
 	private void PublicarDataSourceEnJndiCuandoElPerfilEsLocal() throws NamingException {
-		if (PerfilLocalNoEstaActivo()) {
+		if (NoDebePublicarDataSourceLocal()) {
 			return;
 		}
 		ValidarCredencialesLocales();
@@ -46,10 +46,33 @@ public class LocalJndiDataSourceInitializer implements ApplicationContextInitial
 		RegistrarLog_DataSourceLocalPublicadoEnJndi();
 	}
 
+	private boolean NoDebePublicarDataSourceLocal() {
+		return PerfilLocalNoEstaActivo()
+				|| EstaCorriendoEnWebLogic()
+				|| FabricaJndiLocalNoEstaEnElClasspath();
+	}
+
 	private boolean PerfilLocalNoEstaActivo() {
 		boolean perfilLocalActivo = _environment.acceptsProfiles(Profiles.of("local"));
 		boolean propiedadIndicaLocal = "local".equals(_environment.getProperty("spring.profiles.active"));
 		return !perfilLocalActivo && !propiedadIndicaLocal;
+	}
+
+	private boolean EstaCorriendoEnWebLogic() {
+		return ClaseExiste("weblogic.jndi.WLInitialContextFactory");
+	}
+
+	private boolean FabricaJndiLocalNoEstaEnElClasspath() {
+		return !ClaseExiste("org.osjava.sj.MemoryContextFactory");
+	}
+
+	private boolean ClaseExiste(String nombreClase) {
+		try {
+			Class.forName(nombreClase);
+			return true;
+		} catch (ClassNotFoundException ex) {
+			return false;
+		}
 	}
 
 	private void ValidarCredencialesLocales() {

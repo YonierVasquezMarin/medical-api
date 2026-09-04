@@ -2,12 +2,13 @@ package com.example.medical_api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.web.WebApplicationInitializer;
 
 import com.example.medical_api.config.LocalJndiDataSourceInitializer;
+import com.example.medical_api.config.WeblogicJndiContextSanitizer;
 
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class MedicalApiApplication extends SpringBootServletInitializer implements WebApplicationInitializer {
@@ -21,6 +22,6 @@ public class MedicalApiApplication extends SpringBootServletInitializer implemen
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
 		return builder.sources(MedicalApiApplication.class)
-				.initializers(new LocalJndiDataSourceInitializer());
+				.initializers(new WeblogicJndiContextSanitizer());
 	}
 }

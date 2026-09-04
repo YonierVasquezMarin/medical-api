@@ -16,7 +16,7 @@ import com.example.medical_api.application.dto.CreateUserRequest;
 import com.example.medical_api.application.dto.UserResponse;
 import com.example.medical_api.application.service.UserService;
 
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users")

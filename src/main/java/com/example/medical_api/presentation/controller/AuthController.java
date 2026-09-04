@@ -9,7 +9,7 @@ import com.example.medical_api.application.dto.LoginRequest;
 import com.example.medical_api.application.dto.LoginResponse;
 import com.example.medical_api.application.service.AuthService;
 
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
